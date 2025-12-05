@@ -1,0 +1,22 @@
+# C++ & Visual Studio
+.vs/
+out/
+x64/
+x86/
+debug/
+release/
+*.user
+*.suo
+*.pdb
+*.ipch
+*.aps
+*.ilk
+*.obj
+*.exe
+*.dll
+
+# Qt
+generated_files/
+Makefile*
+*.Debug
+*.Release
