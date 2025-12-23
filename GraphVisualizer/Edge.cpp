@@ -38,7 +38,7 @@ void Edge::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
 		setWeight(val);
 	}
 
-	QGraphicsItem::mouseDoubleClickEvent(event);
+	event->accept();
 }
 
 void Edge::adjust()
@@ -59,6 +59,18 @@ QRectF Edge::boundingRect() const
 	return QRectF(sourcePoint, QSizeF(destPoint.x() - sourcePoint.x(), destPoint.y() - sourcePoint.y())).normalized().adjusted(-extra, -extra, extra, extra);
 }
 
+QPainterPath Edge::shape() const
+{
+	QPainterPath path;
+	path.moveTo(sourcePoint);
+	path.lineTo(destPoint);
+
+	// Создаем "толстый" путь вокруг линии, чтобы по ней было легче попасть мышкой
+	QPainterPathStroker stroker;
+	stroker.setWidth(10); // Область клика будет толщиной 10 пикселей вдоль линии
+	return stroker.createStroke(path);
+}
+
 void Edge::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
 	if (!source || !dest) return;
@@ -71,13 +83,24 @@ void Edge::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWid
 	painter->drawLine(line);
 
 	QPointF center = (sourcePoint + destPoint) / 2.0;
-	QRectF textRect(center.x() - 10, center.y() - 10, 20, 20);
+	QString text = QString::number(m_weight);
 
+	// --- ИСПРАВЛЕНИЕ: Вычисляем размер текста динамически ---
+	QFontMetrics fm(painter->font());
+	int textWidth = fm.horizontalAdvance(text);
+	int textHeight = fm.height();
+
+	// Создаем прямоугольник точно под размер текста + небольшой отступ (padding)
+	// Сдвигаем на половину ширины/высоты, чтобы центр текста совпал с центром линии
+	QRectF textRect(center.x() - textWidth / 2.0 - 4,
+		center.y() - textHeight / 2.0,
+		textWidth + 8, // ширина + отступы
+		textHeight);   // высота
+
+	painter->fillRect(textRect, QColor(255, 255, 255, 200));
 	QFont font = painter->font();
 	font.setBold(true);
 	painter->setFont(font);
-
-	painter->fillRect(textRect, QColor(255, 255, 255, 200));
 	painter->setPen(Qt::blue);
-	painter->drawText(textRect, Qt::AlignCenter, QString::number(m_weight));
+	painter->drawText(textRect, Qt::AlignCenter, text);
 }

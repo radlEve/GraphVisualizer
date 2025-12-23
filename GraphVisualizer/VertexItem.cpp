@@ -54,3 +54,14 @@ void VertexItem::setColor(QColor color)
 	m_color = color;
 	update();
 }
+
+bool VertexItem::isConnectedTo(const VertexItem* other) const
+{
+	for (Edge* edge : edgeList) {
+		// Ребро соединяет нас с кем-то. Проверяем, с кем.
+		if (edge->sourceNode() == other || edge->destNode() == other) {
+			return true; // Связь уже есть
+		}
+	}
+	return false; // Связи нет
+}

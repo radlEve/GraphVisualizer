@@ -57,15 +57,15 @@ bool GraphVisualizer::eventFilter(QObject* watched, QEvent* event)
                     }
                     else {
                         // Ёто второй клик (конец ребра)
-                        // ѕроверка: нельз€ соединить вершину саму с собой и нельз€ создавать дубликаты (пока опустим дубликаты)
+                        // ѕроверка: нельз€ соединить вершину саму с собой и нельз€ создавать дубликаты
                         if (firstVertex != clickedVertex) {
-                            // —оздаем ребро
-                            Edge* newEdge = new Edge(firstVertex, clickedVertex);
-                            scene->addItem(newEdge);
-
-                            // —ообщаем вершинам, что у них есть св€зь
-                            firstVertex->addEdge(newEdge);
-                            clickedVertex->addEdge(newEdge);
+                            bool edgeExists = false;
+                            if (!firstVertex->isConnectedTo(clickedVertex)) {
+                                Edge* newEdge = new Edge(firstVertex, clickedVertex);
+                                scene->addItem(newEdge);
+                                firstVertex->addEdge(newEdge);
+                                clickedVertex->addEdge(newEdge);
+                            }
                         }
 
                         // —брасываем состо€ние

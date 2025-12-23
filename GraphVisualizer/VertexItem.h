@@ -18,7 +18,10 @@ public:
 
 	void setColor(QColor color);
 
+	bool isConnectedTo(const VertexItem* other) const;
+
 	QRectF boundingRect() const override;
+
 	void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
 
 	int getId() const { return m_id; }

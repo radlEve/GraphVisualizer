@@ -22,6 +22,9 @@ public:
 	int getWeight() const { return m_weight; }
 
 	QRectF boundingRect() const override;
+
+	QPainterPath shape() const override;
+
 	void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
 
 protected:
