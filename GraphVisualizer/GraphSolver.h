@@ -37,6 +37,7 @@ public:
     QQueue<AlgorithmStep> runBFS(int startNodeId);
     QQueue<AlgorithmStep> runDFS(int startNodeId);
     QQueue<AlgorithmStep> runDijkstra(int startNodeId);
+    QQueue<AlgorithmStep> runConnectedComponents();
 
 private:
     // Внутреннее хранилище ссылок на объекты

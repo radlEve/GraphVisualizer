@@ -276,6 +276,35 @@ void GraphVisualizer::startDijkstra(int startId)
     }
 }
 
+void GraphVisualizer::startConnectedComponents()
+{
+    // 1. Сброс
+    solver = GraphSolver();
+    currentSteps.clear();
+
+    // 2. Сбор данных
+    QList<VertexItem*> vertices;
+    QList<Edge*> edges;
+    for (QGraphicsItem* item : scene->items()) {
+        if (VertexItem* v = dynamic_cast<VertexItem*>(item)) vertices.append(v);
+        else if (Edge* e = dynamic_cast<Edge*>(item)) edges.append(e);
+    }
+    if (vertices.isEmpty()) return;
+
+    // 3. Загрузка
+    solver.setGraphData(vertices, edges);
+
+    // 4. ЗАПУСК
+    currentSteps = solver.runConnectedComponents();
+
+    // 5. Интерфейс
+    if (!currentSteps.isEmpty()) {
+        actNextStep->setEnabled(true);
+        actAutoPlay->setEnabled(true);
+        executeStep();
+    }
+}
+
 void GraphVisualizer::setupUiCustom()
 {
     // Создаем тулбар
@@ -369,6 +398,11 @@ void GraphVisualizer::contextMenuEvent(QContextMenuEvent* event)
             QAction* actDijkstra = menu.addAction("Запустить Дейкстру");
             connect(actDijkstra, &QAction::triggered, [this, v]() {
                 startDijkstra(v->getId());
+                });
+
+            QAction* actComponents = menu.addAction("Найти компоненты связности");
+            connect(actComponents, &QAction::triggered, [this]() {
+                startConnectedComponents();
                 });
         }
 

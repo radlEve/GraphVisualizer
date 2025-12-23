@@ -26,6 +26,7 @@ public slots:
     void startBFS(int startId);
     void startDFS(int startId);
     void startDijkstra(int startId);
+    void startConnectedComponents();
 
     void onAutoPlay();
     void onNextStep();

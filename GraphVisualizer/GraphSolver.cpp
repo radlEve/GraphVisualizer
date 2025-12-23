@@ -224,3 +224,64 @@ QQueue<AlgorithmStep> GraphSolver::runDijkstra(int startNodeId)
 
     return steps;
 }
+
+QQueue<AlgorithmStep> GraphSolver::runConnectedComponents()
+{
+    QQueue<AlgorithmStep> steps;
+    steps.enqueue({ ResetColors, nullptr, Qt::white });
+
+    QSet<VertexItem*> visited;
+
+    // Список цветов для разных групп (можно добавить больше)
+    QList<QColor> palette = {
+        Qt::red, Qt::blue, Qt::green, Qt::magenta, Qt::darkCyan, Qt::darkYellow
+    };
+    int colorIndex = 0;
+
+    // Пробегаем по ВСЕМ вершинам графа
+    for (VertexItem* node : m_vertices) {
+
+        // Если вершину еще не посещали - значит, мы нашли НОВЫЙ островок
+        if (!visited.contains(node)) {
+
+            // Выбираем цвет. Если цветов мало, начинаем сначала (циклично)
+            QColor currentColor = palette[colorIndex % palette.size()];
+            colorIndex++;
+
+            // Запускаем локальный BFS/DFS, чтобы найти всех жителей этого острова
+            // Используем стек или очередь локально
+            QQueue<VertexItem*> queue;
+            queue.enqueue(node);
+            visited.insert(node);
+
+            steps.enqueue({ HighlightNode, node, currentColor });
+
+            while (!queue.isEmpty()) {
+                VertexItem* current = queue.dequeue();
+
+                // Ищем соседей
+                QList<Edge*> edges = getConnectedEdges(current);
+                for (Edge* edge : edges) {
+                    VertexItem* neighbor = (edge->sourceNode() == current) ? edge->destNode() : edge->sourceNode();
+
+                    if (!visited.contains(neighbor)) {
+                        visited.insert(neighbor);
+                        queue.enqueue(neighbor);
+
+                        // Красим соседа и ребро в цвет текущей группы
+                        steps.enqueue({ HighlightEdge, edge, currentColor });
+                        steps.enqueue({ HighlightNode, neighbor, currentColor });
+                    }
+                    // Если сосед уже посещен, но ребро еще черное - покрасим его тоже (для красоты)
+                    else {
+                        // Дополнительная проверка, чтобы не перекрашивать ребра других групп
+                        // (упрощенно красим всё внутри группы)
+                        steps.enqueue({ HighlightEdge, edge, currentColor });
+                    }
+                }
+            }
+        }
+    }
+
+    return steps;
+}
