@@ -2,6 +2,8 @@
 #include <QGraphicsSceneMouseEvent>
 #include <QStyle>
 #include <QToolBar>
+#include <QMenu>
+#include <QAction>  
 
 #include "Edge.h"
 
@@ -100,6 +102,40 @@ bool GraphVisualizer::eventFilter(QObject* watched, QEvent* event)
         }
     }
     return QMainWindow::eventFilter(watched, event);
+}
+
+void GraphVisualizer::removeEdge(Edge* e)
+{
+    if (!e) return;
+
+    // 1. Сообщаем вершинам, что этого ребра больше нет
+    if (e->sourceNode()) e->sourceNode()->removeEdgeFromList(e);
+    if (e->destNode()) e->destNode()->removeEdgeFromList(e);
+
+    // 2. Удаляем визуально со сцены
+    scene->removeItem(e);
+
+    // 3. Удаляем из памяти
+    delete e;
+}
+
+void GraphVisualizer::removeVertex(VertexItem* v)
+{
+    if (!v) return;
+
+    // 1. Сначала удаляем ВСЕ ребра, связанные с этой вершиной
+    // Делаем копию списка, так как будем удалять из оригинала в процессе
+    QList<Edge*> edgesToRemove = v->getEdges();
+
+    for (Edge* edge : edgesToRemove) {
+        removeEdge(edge);
+    }
+
+    // 2. Удаляем саму вершину со сцены
+    scene->removeItem(v);
+
+    // 3. Удаляем из памяти
+    delete v;
 }
 
 void GraphVisualizer::executeStep()
@@ -248,4 +284,83 @@ void GraphVisualizer::onAutoPlay()
             actAutoPlay->setText("Пауза");
         }
     }
+}
+
+void GraphVisualizer::contextMenuEvent(QContextMenuEvent* event)
+{
+    // Получаем позицию клика в координатах сцены
+    // (хитрый момент: event->pos() это координаты окна, надо перевести во View, потом в Scene)
+    QPoint viewPos = view->mapFrom(this, event->pos());
+    QPointF scenePos = view->mapToScene(viewPos);
+
+    // Смотрим, есть ли что-то под курсором
+    QGraphicsItem* item = scene->itemAt(scenePos, view->transform());
+
+    QMenu menu(this);
+
+    // === СЛУЧАЙ 1: Кликнули на ВЕРШИНУ ===
+    if (VertexItem* v = dynamic_cast<VertexItem*>(item)) {
+        // Действие 1: Запустить BFS отсюда
+        QAction* actBFS = menu.addAction("Запустить BFS отсюда");
+        connect(actBFS, &QAction::triggered, [this, v]() {
+            // Лямбда-функция: запускаем решатель с ID этой вершины
+            // Сначала сбрасываем старое состояние
+            solver = GraphSolver(); // или очистить
+            currentSteps.clear();
+
+            // Собираем данные
+            QList<VertexItem*> nodes;
+            QList<Edge*> edges;
+            for (auto it : scene->items()) {
+                if (auto n = dynamic_cast<VertexItem*>(it)) nodes << n;
+                if (auto e = dynamic_cast<Edge*>(it)) edges << e;
+            }
+            solver.setGraphData(nodes, edges);
+
+            // ЗАПУСК
+            currentSteps = solver.runBFS(v->getId());
+
+            // Включаем интерфейс
+            if (!currentSteps.isEmpty()) {
+                actNextStep->setEnabled(true);
+                actAutoPlay->setEnabled(true);
+                executeStep();
+            }
+            });
+
+        menu.addSeparator();
+
+        // Действие 2: Удалить вершину
+        QAction* actDel = menu.addAction("Удалить вершину");
+        connect(actDel, &QAction::triggered, [this, v]() {
+            removeVertex(v);
+            });
+    }
+
+    // === СЛУЧАЙ 2: Кликнули на РЕБРО ===
+    else if (Edge* e = dynamic_cast<Edge*>(item)) {
+        // Действие 1: Изменить вес
+        QAction* actWeight = menu.addAction("Изменить вес");
+        connect(actWeight, &QAction::triggered, [this, e]() {
+            // Просто вызываем тот же код, что и при двойном клике
+            // Но так как mouseDoubleClickEvent требует событие, проще сымитировать или вынести логику.
+            // Для простоты пока оставим редактирование веса только по двойному клику,
+            // или скопируй логику QInputDialog сюда.
+            });
+
+        // Действие 2: Удалить ребро
+        QAction* actDel = menu.addAction("Удалить ребро");
+        connect(actDel, &QAction::triggered, [this, e]() {
+            removeEdge(e);
+            });
+    }
+
+    // === СЛУЧАЙ 3: Кликнули в ПУСТОТУ ===
+    else {
+        QAction* actClear = menu.addAction("Очистить всё");
+        connect(actClear, &QAction::triggered, this, &GraphVisualizer::onClear);
+    }
+
+    // Показываем меню в точке клика
+    menu.exec(event->globalPos());
 }

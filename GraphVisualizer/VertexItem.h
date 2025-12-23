@@ -16,6 +16,10 @@ public:
 
 	void addEdge(Edge* edge);
 
+	void removeEdgeFromList(Edge* edge);
+
+	QList<Edge*>& getEdges() { return edgeList; }
+
 	void setColor(QColor color);
 
 	bool isConnectedTo(const VertexItem* other) const;

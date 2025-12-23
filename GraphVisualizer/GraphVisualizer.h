@@ -9,6 +9,8 @@
 #include "GraphSolver.h"
 #include <QQueue>
 #include <QTimer> // Для автоматического воспроизведения (опционально)
+#include <QContextMenuEvent>
+#include <QMenu>
 
 class GraphVisualizer : public QMainWindow
 {
@@ -25,6 +27,10 @@ public slots:
     void onAutoPlay();
     void onNextStep();
 
+protected:
+    // Переопределяем событие вызова контекстного меню
+    void contextMenuEvent(QContextMenuEvent* event) override;
+
 private:
     Ui::GraphVisualizerClass ui;
 
@@ -37,6 +43,9 @@ private:
     bool eventFilter(QObject* watched, QEvent* event) override;
 
     VertexItem* firstVertex = nullptr;
+
+    void removeVertex(VertexItem* v);
+    void removeEdge(Edge* e);
 
     GraphSolver solver;
     QQueue<AlgorithmStep> currentSteps; // Очередь шагов, которые надо выполнить

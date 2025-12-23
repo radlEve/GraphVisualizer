@@ -49,6 +49,12 @@ void VertexItem::addEdge(Edge* edge)
 	edge->adjust();
 }
 
+void VertexItem::removeEdgeFromList(Edge* edge)
+{
+	// removeOne удаляет первое вхождение элемента из списка
+	edgeList.removeOne(edge);
+}
+
 void VertexItem::setColor(QColor color)
 {
 	m_color = color;
