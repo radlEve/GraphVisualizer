@@ -27,6 +27,7 @@ public slots:
     void startDFS(int startId);
     void startDijkstra(int startId);
     void startConnectedComponents();
+    void startKruskal();
 
     void onAutoPlay();
     void onNextStep();

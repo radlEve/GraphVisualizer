@@ -5,6 +5,7 @@
 #include <QSet>
 #include <QStack>
 #include <limits>
+#include <algorithm>
 
 GraphSolver::GraphSolver()
 {
@@ -280,6 +281,75 @@ QQueue<AlgorithmStep> GraphSolver::runConnectedComponents()
                     }
                 }
             }
+        }
+    }
+
+    return steps;
+}
+
+// --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ DSU ---
+VertexItem* findSet(VertexItem* v, QMap<VertexItem*, VertexItem*>& parent) {
+    if (v == parent[v])
+        return v;
+    return parent[v] = findSet(parent[v], parent);
+}
+
+void unionSets(VertexItem* a, VertexItem* b, QMap<VertexItem*, VertexItem*>& parent) {
+    a = findSet(a, parent);
+    b = findSet(b, parent);
+    if (a != b)
+        parent[b] = a;
+}
+
+QQueue<AlgorithmStep> GraphSolver::runKruskal()
+{
+    QQueue<AlgorithmStep> steps;
+    steps.enqueue({ ResetColors, nullptr, Qt::white });
+
+    // 1. Инициализация DSU
+    // Изначально каждая вершина - сама себе начальник (отдельное множество)
+    QMap<VertexItem*, VertexItem*> parent;
+    for (VertexItem* v : m_vertices) {
+        parent[v] = v;
+    }
+
+    // 2. Сортировка ребер
+    // Копируем список ребер, чтобы не менять порядок на сцене
+    QList<Edge*> sortedEdges = m_edges;
+
+    // Сортируем лямбда-функцией по весу
+    std::sort(sortedEdges.begin(), sortedEdges.end(), [](Edge* a, Edge* b) {
+        return a->getWeight() < b->getWeight();
+        });
+
+    // 3. Главный цикл
+    int edgesCount = 0; // Сколько ребер мы взяли (для остановки, когда V-1)
+
+    for (Edge* edge : sortedEdges) {
+
+        // Анимация: "Рассматриваем текущее ребро" (Желтый)
+        steps.enqueue({ HighlightEdge, edge, Qt::yellow });
+
+        VertexItem* u = edge->sourceNode();
+        VertexItem* v = edge->destNode();
+
+        // Проверяем, в одной ли они группе
+        if (findSet(u, parent) != findSet(v, parent)) {
+            // Если в РАЗНЫХ -> Берем ребро!
+            unionSets(u, v, parent);
+
+            // Анимация: "Берем!" (Зеленый)
+            steps.enqueue({ HighlightEdge, edge, Qt::green });
+            // Подсветим вершины тоже, чтобы было видно, что они теперь в дереве
+            steps.enqueue({ HighlightNode, u, Qt::green });
+            steps.enqueue({ HighlightNode, v, Qt::green });
+
+            edgesCount++;
+        }
+        else {
+            // Если в ОДНОЙ -> Это цикл, выкидываем
+            // Анимация: "Не берем!" (Красный или Серый)
+            steps.enqueue({ HighlightEdge, edge, Qt::red }); // Красный нагляднее: "Опасность, цикл!"
         }
     }
 
