@@ -27,6 +27,8 @@ void GraphVisualizer::setupScene()
     scene->setSceneRect(0, 0, 800, 600);
 
     scene->installEventFilter(this);
+
+    scene->setBackgroundBrush(Qt::white);
 }
 
 bool GraphVisualizer::eventFilter(QObject* watched, QEvent* event)

@@ -1,14 +1,44 @@
-#include "Edge.h"
+﻿#include "Edge.h"
 #include "VertexItem.h"
 
 #include <QPen>
+#include <QInputDialog>
+#include <QtMath>
 
 Edge::Edge(VertexItem* source, VertexItem* dest) 
-	: source(source), dest(dest)
+	: source(source), dest(dest), m_weight(1)
 {
-	setZValue(-1);		//����� ����� ���� �� ���������, � �� ����������� ��
+	setZValue(-1);		//чтобы ребра были ЗА вершинами, а не перекрывали их
 
 	adjust();
+}
+
+void Edge::setWeight(int w)
+{
+	m_weight = w;
+	update(); // Команда перерисовать линию (чтобы цифра обновилась)
+}
+
+void Edge::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
+{
+	bool ok;
+
+	// Так как мы сохранили файл в UTF-8, можно писать текст прямо так:
+	QString title = "Редактирование ребра";
+
+	QString label = QString("Вес ребра между вершинами %1 и %2:")
+		.arg(source->getId())
+		.arg(dest->getId());
+
+	// Вызываем диалог
+	int val = QInputDialog::getInt(nullptr, title, label,
+		m_weight, 1, 10000, 1, &ok);
+
+	if (ok) {
+		setWeight(val);
+	}
+
+	QGraphicsItem::mouseDoubleClickEvent(event);
 }
 
 void Edge::adjust()
@@ -39,4 +69,15 @@ void Edge::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWid
 
 	painter->setPen(QPen(Qt::black, 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 	painter->drawLine(line);
+
+	QPointF center = (sourcePoint + destPoint) / 2.0;
+	QRectF textRect(center.x() - 10, center.y() - 10, 20, 20);
+
+	QFont font = painter->font();
+	font.setBold(true);
+	painter->setFont(font);
+
+	painter->fillRect(textRect, QColor(255, 255, 255, 200));
+	painter->setPen(Qt::blue);
+	painter->drawText(textRect, Qt::AlignCenter, QString::number(m_weight));
 }
