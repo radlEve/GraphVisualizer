@@ -36,6 +36,7 @@ public:
     // Они возвращают очередь шагов, которые нужно проиграть
     QQueue<AlgorithmStep> runBFS(int startNodeId);
     QQueue<AlgorithmStep> runDFS(int startNodeId);
+    QQueue<AlgorithmStep> runDijkstra(int startNodeId);
 
 private:
     // Внутреннее хранилище ссылок на объекты

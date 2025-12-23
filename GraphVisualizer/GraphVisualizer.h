@@ -25,6 +25,8 @@ public slots:
     // Слоты для кнопок
     void startBFS(int startId);
     void startDFS(int startId);
+    void startDijkstra(int startId);
+
     void onAutoPlay();
     void onNextStep();
 

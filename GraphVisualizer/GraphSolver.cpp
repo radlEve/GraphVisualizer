@@ -4,6 +4,7 @@
 #include <QQueue>
 #include <QSet>
 #include <QStack>
+#include <limits>
 
 GraphSolver::GraphSolver()
 {
@@ -131,6 +132,91 @@ QQueue<AlgorithmStep> GraphSolver::runDFS(int startNodeId)
                     // Анимация: подсветим ребро, которое "нашли", но еще не прошли
                     // Сделаем его, например, синим, чтобы отличать от пройденного
                     steps.enqueue({ HighlightEdge, edge, Qt::cyan });
+                }
+            }
+        }
+    }
+
+    return steps;
+}
+
+QQueue<AlgorithmStep> GraphSolver::runDijkstra(int startNodeId)
+{
+    QQueue<AlgorithmStep> steps;
+    steps.enqueue({ ResetColors, nullptr, Qt::white });
+
+    VertexItem* startNode = findNodeById(startNodeId);
+    if (!startNode) return steps;
+
+    // 1. Инициализация
+    // Храним текущие минимальные расстояния
+    QMap<VertexItem*, int> distances;
+    // Храним "откуда мы пришли" (чтобы потом восстановить путь, если нужно)
+    // Но для раскраски нам достаточно знать, что ребро входит в кратчайшее дерево
+    QMap<VertexItem*, Edge*> parentEdge;
+
+    QList<VertexItem*> unvisitedNodes = m_vertices;
+
+    // Заполняем бесконечностью
+    for (VertexItem* v : m_vertices) {
+        distances[v] = std::numeric_limits<int>::max(); // Бесконечность
+    }
+    distances[startNode] = 0;
+
+    while (!unvisitedNodes.isEmpty()) {
+        // 2. Ищем вершину с минимальным расстоянием среди непосещенных
+        VertexItem* current = nullptr;
+        int minDist = std::numeric_limits<int>::max();
+
+        for (VertexItem* node : unvisitedNodes) {
+            if (distances[node] < minDist) {
+                minDist = distances[node];
+                current = node;
+            }
+        }
+
+        // Если все оставшиеся вершины недостижимы (бесконечность) - выходим
+        if (current == nullptr || minDist == std::numeric_limits<int>::max()) {
+            break;
+        }
+
+        // Удаляем из непосещенных
+        unvisitedNodes.removeOne(current);
+
+        // Анимация: "Мы закрепили эту вершину" (Зеленый - финал)
+        steps.enqueue({ HighlightNode, current, Qt::green });
+
+        // Если мы пришли в эту вершину по какому-то ребру, красим это ребро в "хороший" путь
+        if (parentEdge.contains(current)) {
+            steps.enqueue({ HighlightEdge, parentEdge[current], Qt::green });
+        }
+
+        // 3. Релаксация (обновление соседей)
+        QList<Edge*> edges = getConnectedEdges(current);
+
+        for (Edge* edge : edges) {
+            VertexItem* neighbor = (edge->sourceNode() == current) ? edge->destNode() : edge->sourceNode();
+
+            // Если сосед еще не посещен
+            if (unvisitedNodes.contains(neighbor)) {
+                // Анимация: "Проверяем ребро" (Желтый)
+                steps.enqueue({ HighlightEdge, edge, Qt::yellow });
+
+                int weight = edge->getWeight();
+                int newDist = distances[current] + weight;
+
+                // Если нашли путь короче
+                if (newDist < distances[neighbor]) {
+                    distances[neighbor] = newDist;
+                    parentEdge[neighbor] = edge;
+
+                    // Анимация: "Нашли путь лучше!" (Сосед мигает оранжевым)
+                    steps.enqueue({ HighlightNode, neighbor, Qt::darkYellow });
+                }
+                else {
+                    // Анимация: "Путь не лучше, возвращаем ребро в черный/серый"
+                    // (Опционально, можно не делать, или красить в серый как "отброшенное")
+                    steps.enqueue({ HighlightEdge, edge, Qt::lightGray });
                 }
             }
         }
