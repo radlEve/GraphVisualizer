@@ -21,6 +21,8 @@ public:
 	void setWeight(int w);
 	int getWeight() const { return m_weight; }
 
+	void setColor(QColor color);
+
 	QRectF boundingRect() const override;
 
 	QPainterPath shape() const override;
@@ -37,5 +39,7 @@ private:
 
 	qreal arrowSize = 10;
 	int m_weight;
+
+	QColor m_color;
 };
 

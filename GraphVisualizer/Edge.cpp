@@ -9,8 +9,14 @@ Edge::Edge(VertexItem* source, VertexItem* dest)
 	: source(source), dest(dest), m_weight(1)
 {
 	setZValue(-1);		//чтобы ребра были ЗА вершинами, а не перекрывали их
-
+	m_color = Qt::black;
 	adjust();
+}
+
+void Edge::setColor(QColor color)
+{
+	m_color = color;
+	update();
 }
 
 void Edge::setWeight(int w)
@@ -79,7 +85,7 @@ void Edge::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWid
 
 	if (qFuzzyCompare(line.length(), qreal(0.))) return;
 
-	painter->setPen(QPen(Qt::black, 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+	painter->setPen(QPen(m_color, 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 	painter->drawLine(line);
 
 	QPointF center = (sourcePoint + destPoint) / 2.0;
