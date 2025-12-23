@@ -1,10 +1,14 @@
 #include "VertexItem.h"
+#include "Edge.h"
+
 
 VertexItem::VertexItem(int id, QPointF position)
 	: m_id(id)
 {
 	setFlags(ItemIsMovable | ItemIsSelectable | ItemSendsGeometryChanges);
 	setPos(position);
+
+	m_color = Qt::white;
 }
 
 QRectF VertexItem::boundingRect() const
@@ -17,7 +21,7 @@ void VertexItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 	Q_UNUSED(option);	//макросы, чтобы компилятор не ругался, т.к. мы их не используем
 	Q_UNUSED(widget);	//но сигнатура метода фикисирована
 	
-	painter->setBrush(Qt::white);
+	painter->setBrush(m_color);
 	painter->setPen(QPen(Qt::black, 2));
 
 	if (isSelected()) {
@@ -32,7 +36,21 @@ void VertexItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 QVariant VertexItem::itemChange(GraphicsItemChange change, const QVariant& value)
 {
 	if (change == ItemPositionChange && scene()) {
-		// Сюда мы добавим код для обновления ребер, когда будем их делать
+		for (Edge* edge : edgeList) {
+			edge->adjust();
+		}
 	}
 	return QGraphicsItem::itemChange(change, value);
+}
+
+void VertexItem::addEdge(Edge* edge)
+{
+	edgeList << edge;
+	edge->adjust();
+}
+
+void VertexItem::setColor(QColor color)
+{
+	m_color = color;
+	update();
 }

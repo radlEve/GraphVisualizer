@@ -92,6 +92,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Edge.cpp" />
     <ClCompile Include="VertexItem.cpp" />
     <QtRcc Include="GraphVisualizer.qrc" />
     <QtUic Include="GraphVisualizer.ui" />
@@ -100,6 +101,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Edge.h" />
     <ClInclude Include="VertexItem.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

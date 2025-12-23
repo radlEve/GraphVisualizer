@@ -25,5 +25,9 @@ private:
     int nextId = 1;         //cчетчик для номеров вершин
 
     bool eventFilter(QObject* watched, QEvent* event) override;
+
+    VertexItem* firstVertex = nullptr;
 };
+
+//метки времени
 

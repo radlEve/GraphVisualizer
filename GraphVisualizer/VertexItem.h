@@ -4,11 +4,19 @@
 #include <QPainter>
 #include <QBrush>
 #include <QPen>
+#include <QList>
+
+
+class Edge;
 
 class VertexItem : public QGraphicsItem
 {
 public:
 	VertexItem(int id, QPointF position);
+
+	void addEdge(Edge* edge);
+
+	void setColor(QColor color);
 
 	QRectF boundingRect() const override;
 	void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
@@ -21,5 +29,7 @@ protected:
 private:
 	int m_id;				//Уникальный номер вершины
 	const int m_radius = 20;	//Радиус круга
+	QList<Edge*> edgeList;
+	QColor m_color;
 };
 
