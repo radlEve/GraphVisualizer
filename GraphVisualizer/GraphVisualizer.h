@@ -23,7 +23,8 @@ public:
 public slots:
     void onClear(); // Слот очистки
     // Слоты для кнопок
-    void onRunBFS();
+    void startBFS(int startId);
+    void startDFS(int startId);
     void onAutoPlay();
     void onNextStep();
 
@@ -55,7 +56,6 @@ private:
 
     QToolBar* toolbar;
     QAction* actClear;
-    QAction* actRunBFS;
     QAction* actNextStep;
 
     QTimer* autoPlayTimer; // Таймер для анимации

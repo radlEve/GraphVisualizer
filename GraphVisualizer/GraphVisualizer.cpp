@@ -183,9 +183,17 @@ void GraphVisualizer::onNextStep()
     executeStep();
 }
 
-void GraphVisualizer::onRunBFS()
+void GraphVisualizer::startBFS(int startId)
 {
-    // 1. Собираем данные со сцены
+    // 1. Сбрасываем старое (на всякий случай)
+    actNextStep->setEnabled(false);
+    actAutoPlay->setEnabled(false);
+    if (autoPlayTimer->isActive()) onAutoPlay();
+    // Или просто:
+    solver = GraphSolver();
+    currentSteps.clear();
+
+    // 2. Собираем данные со сцены
     QList<VertexItem*> vertices;
     QList<Edge*> edges;
 
@@ -196,28 +204,47 @@ void GraphVisualizer::onRunBFS()
 
     if (vertices.isEmpty()) return;
 
-    // 2. Загружаем в решатель
+    // 3. Загружаем и запускаем
     solver.setGraphData(vertices, edges);
 
-    // 3. Запускаем алгоритм (стартуем, например, с вершины с минимальным ID)
-    // Либо можно сделать выбор стартовой вершины кликом
-    int startId = vertices.first()->getId();
-
+    // Используем переданный ID
     currentSteps = solver.runBFS(startId);
 
+    // 4. Активируем интерфейс
     if (!currentSteps.isEmpty()) {
         actNextStep->setEnabled(true);
         actAutoPlay->setEnabled(true);
-        // Можно сразу выполнить первый шаг (сброс цветов), чтобы пользователь видел реакцию
+        executeStep(); // Сразу выполняем первый шаг (сброс цветов)
+    }
+}
+
+void GraphVisualizer::startDFS(int startId)
+{
+    // 1. Сброс
+    solver = GraphSolver();
+    currentSteps.clear();
+
+    // 2. Сбор данных
+    QList<VertexItem*> vertices;
+    QList<Edge*> edges;
+    for (QGraphicsItem* item : scene->items()) {
+        if (VertexItem* v = dynamic_cast<VertexItem*>(item)) vertices.append(v);
+        else if (Edge* e = dynamic_cast<Edge*>(item)) edges.append(e);
+    }
+    if (vertices.isEmpty()) return;
+
+    // 3. Загрузка
+    solver.setGraphData(vertices, edges);
+
+    // 4. ЗАПУСК ИМЕННО DFS
+    currentSteps = solver.runDFS(startId);
+
+    // 5. Интерфейс
+    if (!currentSteps.isEmpty()) {
+        actNextStep->setEnabled(true);
+        actAutoPlay->setEnabled(true);
         executeStep();
     }
-    // Тут можно или сразу все выполнить (циклом), или ждать нажатия кнопки "Next"
-    // Пример мгновенного выполнения:
-    /*
-    while (!currentSteps.isEmpty()) {
-        executeStep();
-    }
-    */
 }
 
 void GraphVisualizer::setupUiCustom()
@@ -239,11 +266,7 @@ void GraphVisualizer::setupUiCustom()
 
     toolbar->addSeparator(); // Вертикальная черта
 
-    // 2. Кнопка BFS (иконка "Компьютер" или "Play")
-    QIcon iconPlay = style()->standardIcon(QStyle::SP_ComputerIcon);
-    actRunBFS = toolbar->addAction(iconPlay, "Запуск BFS", this, &GraphVisualizer::onRunBFS);
-
-    // 3. Кнопка NEXT (иконка "Стрелка вправо")
+    // 2. Кнопка NEXT (иконка "Стрелка вправо")
     QIcon iconNext = style()->standardIcon(QStyle::SP_ArrowRight);
     actNextStep = toolbar->addAction(iconNext, "Шаг вперед", this, &GraphVisualizer::onNextStep);
 
@@ -301,32 +324,19 @@ void GraphVisualizer::contextMenuEvent(QContextMenuEvent* event)
     // === СЛУЧАЙ 1: Кликнули на ВЕРШИНУ ===
     if (VertexItem* v = dynamic_cast<VertexItem*>(item)) {
         // Действие 1: Запустить BFS отсюда
-        QAction* actBFS = menu.addAction("Запустить BFS отсюда");
-        connect(actBFS, &QAction::triggered, [this, v]() {
-            // Лямбда-функция: запускаем решатель с ID этой вершины
-            // Сначала сбрасываем старое состояние
-            solver = GraphSolver(); // или очистить
-            currentSteps.clear();
+        if (VertexItem* v = dynamic_cast<VertexItem*>(item)) {
 
-            // Собираем данные
-            QList<VertexItem*> nodes;
-            QList<Edge*> edges;
-            for (auto it : scene->items()) {
-                if (auto n = dynamic_cast<VertexItem*>(it)) nodes << n;
-                if (auto e = dynamic_cast<Edge*>(it)) edges << e;
-            }
-            solver.setGraphData(nodes, edges);
+            QAction* actBFS = menu.addAction("Запустить BFS отсюда");
 
-            // ЗАПУСК
-            currentSteps = solver.runBFS(v->getId());
+            // Теперь лямбда просто вызывает наш готовый метод
+            connect(actBFS, &QAction::triggered, [this, v]() {
+                startBFS(v->getId()); });
 
-            // Включаем интерфейс
-            if (!currentSteps.isEmpty()) {
-                actNextStep->setEnabled(true);
-                actAutoPlay->setEnabled(true);
-                executeStep();
-            }
-            });
+            QAction* actDFS = menu.addAction("Запустить DFS отсюда");
+            connect(actDFS, &QAction::triggered, [this, v]() {
+                startDFS(v->getId());
+                });
+        }
 
         menu.addSeparator();
 

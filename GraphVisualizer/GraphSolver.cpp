@@ -3,6 +3,7 @@
 #include "Edge.h"
 #include <QQueue>
 #include <QSet>
+#include <QStack>
 
 GraphSolver::GraphSolver()
 {
@@ -82,6 +83,56 @@ QQueue<AlgorithmStep> GraphSolver::runBFS(int startNodeId)
         // (кроме стартовой, пусть останется зеленой для красоты)
         if (current != startNode) {
             steps.enqueue({ HighlightNode, current, Qt::lightGray });
+        }
+    }
+
+    return steps;
+}
+
+// === РЕАЛИЗАЦИЯ DFS (Поиск в глубину) ===
+QQueue<AlgorithmStep> GraphSolver::runDFS(int startNodeId)
+{
+    QQueue<AlgorithmStep> steps;
+    steps.enqueue({ ResetColors, nullptr, Qt::white });
+
+    VertexItem* startNode = findNodeById(startNodeId);
+    if (!startNode) return steps;
+
+    // Используем СТЕК вместо Очереди
+    QStack<VertexItem*> stack;
+    QSet<VertexItem*> visited;
+
+    stack.push(startNode);
+
+    while (!stack.isEmpty()) {
+        VertexItem* current = stack.pop();
+
+        // В DFS мы помечаем вершину посещенной, когда ДОСТАЕМ её из стека
+        if (!visited.contains(current)) {
+            visited.insert(current);
+
+            // Анимация: текущая вершина обрабатывается
+            // Если это старт - зеленый, иначе - желтый (или оранжевый для отличия от BFS)
+            QColor color = (current == startNode) ? Qt::green : Qt::yellow;
+            steps.enqueue({ HighlightNode, current, color });
+
+            // Получаем соседей
+            QList<Edge*> connectedEdges = getConnectedEdges(current);
+
+            // Важный момент: чтобы идти "слева направо", в стек кладут в обратном порядке.
+            // Но для визуализации это не критично.
+
+            for (Edge* edge : connectedEdges) {
+                VertexItem* neighbor = (edge->sourceNode() == current) ? edge->destNode() : edge->sourceNode();
+
+                if (!visited.contains(neighbor)) {
+                    stack.push(neighbor);
+
+                    // Анимация: подсветим ребро, которое "нашли", но еще не прошли
+                    // Сделаем его, например, синим, чтобы отличать от пройденного
+                    steps.enqueue({ HighlightEdge, edge, Qt::cyan });
+                }
+            }
         }
     }
 
